@@ -1,0 +1,48 @@
+---
+title: "Architecture"
+---
+
+The pipeline should expose the same core operations through Python functions, command-line subcommands, and complete pipeline runs. Each stage should have a narrow contract: inputs, outputs, validation, execution, and report generation.
+
+## Stage contract
+
+Each stage should define:
+
+- Accepted input object types and on-disk paths.
+- Required metadata and validation rules.
+- Output object type.
+- Output folder layout.
+- Provenance fields.
+- Warnings and hard failure conditions.
+- Whether it can stream, must materialise data, or can run lazily.
+
+## Passing objects between steps
+
+The architecture needs to support both in-memory and on-disk execution.
+
+| Mode | Use case | Requirement |
+|---|---|---|
+| In memory | Fast iteration, notebooks, short debug slices. | Pass SpikeInterface objects directly between Python calls. |
+| On disk | Long jobs, cluster execution, resumable workflows. | Save stage outputs and reload them from `manifest.yaml`. |
+| Hybrid | Expensive partial runs followed by interactive inspection. | Persist selected checkpoints while passing cheap objects in memory. |
+
+## Inter-session processing
+
+Inter-session concatenation and alignment require explicit handling of channels and metadata.
+
+- The default multi-session bad-channel policy should remove the union of all detected bad channels.
+- If the user disables the union policy, warn that unit matching and concatenation can become unreliable.
+- Inter-session alignment should produce quality metrics and an HTML report before sorting.
+- The preprocessing output may be either a single concatenated session for sorting or a list of aligned recordings for later unit matching.
+
+## Further analysis hooks
+
+Each step should output an object that can be used for downstream checking and visualisation. For example, sorting outputs should be usable by drift plots, curation GUIs, and unit-matching tools without requiring the user to rediscover paths manually.
+
+## Architecture questions
+
+- How should step outputs be typed so they work equally well in Python and on disk?
+- Should there be one massive config, per-step configs, or a hybrid resolved config?
+- Which objects are serialised directly, and which are represented by paths plus metadata?
+- How should GUI curation tools write decisions back into the pipeline run folder?
+- How much of unit matching belongs in the core pipeline versus a downstream module?

@@ -1,0 +1,32 @@
+/*-- scss:defaults --*/
+$primary: #2c6e9b;
+$font-size-root: 17px;
+
+/*-- scss:rules --*/
+.quarto-title-block .quarto-title .title {
+  font-weight: 600;
+}
+
+.sidebar-title > a {
+  font-size: 1rem;
+  white-space: nowrap;
+}
+
+.callout-note,
+.callout-warning,
+.callout-important {
+  border-radius: 4px;
+}
+
+table {
+  font-size: 0.95rem;
+}
+
+code {
+  white-space: pre-wrap;
+}
+
+.pipeline-stage {
+  font-weight: 600;
+  color: #244f70;
+}

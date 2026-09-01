@@ -1,0 +1,25 @@
+---
+title: "Electrophysiology pipeline plan"
+---
+
+This site defines a high-level specification for a modern extracellular electrophysiology spike-sorting pipeline. It organises the planning document into a Quarto book so the pipeline stages, inputs, outputs, disk layout, API surface, and architectural questions can be reviewed independently.
+
+The pipeline should be:
+
+- **Modular**: the full pipeline can run from one command, but users can also run up to any arbitrary step and stop for troubleshooting, parameter selection, and manual review.
+- **Composable**: each step should also be available through subcommands or Python functions.
+- **Protective**: the implementation should check for common invalid or poor-practice choices and warn or fail before users create misleading outputs.
+- **Traceable**: each step should define the inputs it consumes, the outputs it writes, and the metadata needed to reproduce a run.
+
+The proposed top-level stages are:
+
+1. Data loading
+2. Raw data quality metrics
+3. Artefact detection
+4. Artefact curation
+5. Preprocessing
+6. Spike sorting
+7. Postprocessing
+8. Curation
+
+The current draft is intentionally specification-first. Implementation details that are not settled yet are called out as open decisions rather than hidden in prose.

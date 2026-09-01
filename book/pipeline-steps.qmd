@@ -1,0 +1,160 @@
+---
+title: "Pipeline steps"
+---
+
+This page specifies each stage in terms of purpose, inputs, outputs, and key behaviour.
+
+## 1. Data loading
+
+Data loading is left primarily to the user. The pipeline consumes recording sessions rather than trying to infer every experimental design.
+
+**Inputs**
+
+- `DATA_INPUT`: one or more paths, SpikeInterface recordings, or saved SpikeInterface recording folders.
+- `PROBE_INPUT`: optional user-supplied probe definition when it cannot be inferred from the source data.
+- `CONFIG_INPUT`: loading options, including optional time slicing for debug runs.
+
+**Outputs**
+
+- `LOAD_DATA_OUTPUT`: a list of SpikeInterface recordings representing sessions.
+- Optionally, paths to saved SpikeInterface recordings.
+- Loading provenance, including source paths, probe resolution, channel map, sampling rate, and any time slice applied.
+
+**Checks**
+
+- Stop if the probe cannot be loaded automatically and the user has not provided one.
+- Warn when recordings intended for multi-session processing do not share compatible channel sets or sampling rates.
+
+## 2. Raw data quality metrics
+
+This step computes quality metrics on raw recordings before destructive or corrective processing.
+
+**Inputs**
+
+- `LOAD_DATA_OUTPUT`, usually one recording at a time.
+- Quality metric configuration.
+
+**Outputs**
+
+- Metric tables, such as per-channel noise, saturation, drift proxies, missing data, and amplitude summaries.
+- Plots and HTML reports for quick inspection.
+- Machine-readable quality metadata for downstream warnings.
+
+## 3. Artefact detection
+
+Users often need to detect and inspect artefacts before committing to preprocessing. Detection should be automated, but results must be editable.
+
+**Inputs**
+
+- Raw recordings from `LOAD_DATA_OUTPUT`.
+- Detection configuration for saturation and stimulus artefacts.
+
+**Outputs**
+
+- Candidate artefact intervals in a machine-readable table.
+- Diagnostic plots around detected events.
+- Detection parameters and provenance.
+
+**Steps**
+
+1. Saturation detection before preprocessing.
+2. Stimulus artefact detection after preprocessing, with preprocessing applied on the fly for this detection pass.
+3. Preparation of artefact tables for manual curation.
+
+## 4. Artefact curation
+
+Detected artefacts should be manually checked and edited, for example in `viewephys` or another GUI.
+
+**Inputs**
+
+- Candidate artefact intervals.
+- Diagnostic plots or review-ready data excerpts.
+
+**Outputs**
+
+- Curated artefact intervals.
+- Curation provenance, including reviewer, timestamp, and edit history where feasible.
+- A stage status indicating whether curation was skipped, completed, or required but missing.
+
+## 5. Preprocessing
+
+Preprocessing applies user-selected transformations from the YAML configuration.
+
+**Supported steps**
+
+- Bad channel detection and removal or interpolation.
+- Phase shift correction.
+- Filtering: high-pass, low-pass, or band-pass.
+- Artefact period filling with zeros, noise, or another configured strategy.
+- Common referencing or high-pass spatial filtering.
+- Motion correction.
+- Inter-session alignment when the input is a list of recordings.
+- Whitening.
+
+**Inputs**
+
+- Loaded recordings.
+- Curated artefact intervals, if available.
+- Preprocessing configuration.
+
+**Outputs**
+
+- A preprocessed SpikeInterface recording, a saved recording folder, or both.
+- Bad channel tables and channel-selection metadata.
+- Processing report with plots suitable for manual review.
+
+**Warnings**
+
+- Apply phase-shift correction when the probe supports it.
+- For multi-session processing, use the same set of channels across sessions.
+- Do not re-run whitening or motion correction in the sorter if already run through SpikeInterface preprocessing.
+- Warn when high-density-specific methods, such as motion correction or bad channel detection, are used on 32- or 64-channel recordings.
+
+## 6. Spike sorting
+
+Spike sorting consumes the preprocessed recording and runs the selected sorter.
+
+**Inputs**
+
+- Preprocessed recording.
+- Sorter configuration.
+- Optional compute and memory limits.
+
+**Outputs**
+
+- Sorting output in SpikeInterface-compatible form.
+- Sorter logs and runtime metadata.
+- Parameters used for the run.
+
+## 7. Postprocessing
+
+Postprocessing computes derived quantities and summaries needed for curation and later analysis.
+
+**Inputs**
+
+- Sorting output.
+- Preprocessed recording.
+- Postprocessing configuration.
+
+**Outputs**
+
+- Waveforms, templates, amplitudes, correlograms, quality metrics, and drift plots where applicable.
+- HTML reports for manual review.
+- Machine-readable postprocessing outputs for GUI and downstream analysis tools.
+
+## 8. Curation
+
+Curation turns sorter output into a reviewed unit table and curated sorting result.
+
+**Inputs**
+
+- Sorting and postprocessing outputs.
+- Curation configuration.
+- Optional manual decisions from a GUI.
+
+**Outputs**
+
+- Curated sorting output.
+- Unit-quality table.
+- Curation decisions and provenance.
+- Export bundle for further analysis.

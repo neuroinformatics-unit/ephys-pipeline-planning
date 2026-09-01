@@ -1,0 +1,115 @@
+---
+title: "Configuration and API"
+---
+
+The pipeline should be configurable from YAML and callable from both the command line and Python. The implementation should infer which steps to run from the configuration when possible.
+
+## Configuration principles
+
+- Use YAML as the user-facing configuration format.
+- Validate configuration with Pydantic or an equivalent schema layer.
+- Support per-step configuration while allowing a single resolved configuration file per run.
+- Record default values in `config.resolved.yaml` so reruns are reproducible.
+- Validate conflicting choices before expensive computation starts.
+
+## Example structure
+
+```yaml
+data:
+  inputs:
+    - /path/to/session_001
+  probe: /path/to/probe.json
+  debug_time_slice: null
+
+raw_quality:
+  enabled: true
+
+artefacts:
+  saturation:
+    enabled: true
+  stimulus:
+    enabled: true
+
+preprocessing:
+  bad_channels:
+    enabled: true
+    multi_session_policy: union
+  phase_shift: auto
+  filtering:
+    type: bandpass
+    freq_min: 300
+    freq_max: 6000
+  common_reference: true
+  whitening: true
+
+sorting:
+  sorter: kilosort4
+  params: {}
+
+postprocessing:
+  waveforms: true
+  quality_metrics: true
+
+curation:
+  gui: viewephys
+```
+
+## Command-line examples
+
+Run the full pipeline:
+
+```bash
+ephys-pipeline run --config pipeline.yaml --output pipeline_run
+```
+
+Run only through preprocessing on a short time slice:
+
+```bash
+ephys-pipeline run --config pipeline.yaml --output debug_run --until preprocessing --debug-time-slice 0:120
+```
+
+Run one stage explicitly:
+
+```bash
+ephys-pipeline raw-quality --config pipeline.yaml --output pipeline_run
+```
+
+## Python API examples
+
+A user setting up for the first time with a fast preprocessing iteration cycle:
+
+```python
+recordings = ["/path/to/session_001", "/path/to/session_002"]
+
+preprocess(
+    recordings,
+    output_path="debug_preprocessing",
+    time_slice="0:120",
+    save_recording=False,
+)
+```
+
+A user checking raw data quality metrics:
+
+```python
+recordings = ["/path/to/session_001"]
+
+raw_data_metrics(recordings, output_path="raw_quality")
+```
+
+A user manually curating saturation artefacts:
+
+```python
+recordings = ["/path/to/session_001"]
+detections = detect_artefacts(recordings, output_path="artefact_detection")
+curate_artefacts(detections, output_path="artefact_curation", gui="viewephys")
+```
+
+## Best-practice warnings
+
+A major benefit of a structured pipeline is that it can encode best practice directly into the execution path.
+
+- For multi-session workflows, the same set of channels should be used across all sessions.
+- If bad channels are removed before concatenation, the default policy should remove the union of all detected bad channels across sessions.
+- Avoid re-running whitening or motion correction in the sorter if those steps have already been applied by SpikeInterface.
+- Warn when a method was designed for high-channel-density probes and may behave poorly on smaller 32- or 64-channel recordings.

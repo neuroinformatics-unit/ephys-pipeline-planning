@@ -1,0 +1,40 @@
+project:
+  type: book
+  output-dir: _site
+  render:
+    - "*.qmd"
+  resources:
+    - CNAME
+
+book:
+  title: "Electrophysiology Pipeline Plan"
+  search: true
+  page-navigation: true
+  site-url: https://ephys-pipeline-planning.neuroinformatics.dev
+  sidebar:
+    title: "Ephys Pipeline<br>Planning"
+    style: docked
+    collapse-level: 1
+  page-footer:
+    left: "Electrophysiology Pipeline Plan"
+    right: "Built with [Quarto](https://quarto.org)."
+  chapters:
+    - index.qmd
+    - pipeline-overview.qmd
+    - pipeline-steps.qmd
+    - disk-organisation.qmd
+    - configuration-and-api.qmd
+    - architecture.qmd
+    - definitions-and-scope.qmd
+
+format:
+  html:
+    theme:
+      - cosmo
+      - styles.scss
+    toc: true
+    toc-depth: 3
+    toc-expand: true
+    number-sections: false
+    fig-align: center
+    link-external-newwindow: true
