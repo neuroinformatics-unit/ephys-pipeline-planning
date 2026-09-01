@@ -1,2 +1,2 @@
 # ephys-pipeline-planning
-This repository is for planning the development of an exracellular electrophysiology pipelines builder
+This repository is for planning the development of an extracellular electrophysiology pipeline builder
