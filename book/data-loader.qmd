@@ -1,0 +1,24 @@
+---
+title: "Data loader"
+---
+
+In the single-session case, this step takes any [`RAW_DATA_PATH`](outputs.qmd#raw-data-path) or loaded [`SPIKEINTERFACE_REC`](outputs.qmd#spikeinterface-rec) as an input.
+
+In the multi-session case, the user can pass a [`SPIKEINTERFACE_REC`](outputs.qmd#spikeinterface-rec), [`SPIKEINTERFACE_REC_LIST`](outputs.qmd#spikeinterface-rec-list). If the user wants to concatenate
+runs or sessions, they can do so manually at this stage. If the user wants to split the sorting based on concatenated times, 
+they will need to use [`CONCAT_REC_TIMES`](outputs.qmd#concat-rec-times).
+
+This step should provide an argument to cut down the recording for debugging (e.g. `debug=True` will take the first 3 minutes
+of the recording, see [`DEBUGGING_REC`](outputs.qmd#debugging-rec)). It should provide the option for the user to pass a [`PROBE`](outputs.qmd#probe) to attach to the recording(s).
+
+The result of this step is an in-memory [`SPIKEINTERFACE_REC`](outputs.qmd#spikeinterface-rec).  
+
+For flexibility, this node can be 
+
+<details>
+<summary><strong>Checks</strong></summary>
+
+- Stop if the probe cannot be loaded automatically and the user has not provided one.
+- Warn when recordings intended for multi-session processing do not share compatible channel sets or sampling rates.
+
+</details>

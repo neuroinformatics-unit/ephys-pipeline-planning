@@ -1,0 +1,47 @@
+---
+title: "Inputs and Outputs"
+---
+
+Data objects and files passed between the stages in [Pipeline steps](pipeline-steps.qmd). Definitions to be added. See [Directory definitions](directory-definitions.qmd) for on-disk locations.
+
+## Inputs
+
+### `RAW_DATA_PATH` {#raw-data-path}
+
+### `RAW_DATA_PATH_LIST` {#raw-data-path-list}
+
+### `SPIKEINTERFACE_REC` {#spikeinterface-rec}
+
+### `SPIKEINTERFACE_REC_LIST` {#spikeinterface-rec-list}
+
+### `CONCAT_REC_TIMES` {#concat-rec-times}
+
+### `DEBUGGING_REC` {#debugging-rec}
+
+### `PROBE` {#probe}
+
+### `CONFIG` {#config}
+
+## Outputs
+
+### `RAW_DATA_QUALITY_METRICS` {#raw-data-quality-metrics}
+
+### `RAW_DATA_QUALITY_PLOTS` {#raw-data-quality-plots}
+
+### `EVENT_PERIODS_CSV` {#event-periods-csv}
+
+### `EVENT_PERIODS_CURATED_CSV` {#event-periods-curated-csv}
+
+### `SORTING` {#sorting}
+
+### `SORTING_ANALYZER` {#sorting-analyzer}
+
+### `QUALITY_METRICS_CSV` {#quality-metrics-csv}
+
+### `POSTPROCESSING_PLOTS` {#postprocessing-plots}
+
+### `CURATION_DECISIONS` {#curation-decisions}
+
+### `NWB_FILE` {#nwb-file}
+
+### `NWB_VALIDATION_REPORT` {#nwb-validation-report}

@@ -19,13 +19,24 @@ book:
     left: "Electrophysiology Pipeline Plan"
     right: "Built with [Quarto](https://quarto.org)."
   chapters:
-    - index.qmd
-    - pipeline-overview.qmd
-    - pipeline-steps.qmd
-    - disk-organisation.qmd
-    - configuration-and-api.qmd
-    - architecture.qmd
-    - definitions-and-scope.qmd
+    - href: index.qmd
+      text: "Overview"
+    - part: "Spec"
+      chapters:
+        - href: data-loader.qmd
+          text: "Data loader"
+        - href: pipeline-steps.qmd
+          text: "Pipeline steps"
+        - href: outputs.qmd
+          text: "Inputs and Outputs"
+        - href: directory-definitions.qmd
+          text: "Directory definitions"
+    - implementation.qmd
+    - modular-architecture.qmd
+    - api.qmd
+    - definitions.qmd
+    - scope.qmd
+    - roadmap.qmd
 
 format:
   html:

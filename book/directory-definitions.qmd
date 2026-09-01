@@ -1,0 +1,16 @@
+---
+title: "Directory definitions"
+---
+
+Canonical directories named in [Pipeline steps](pipeline-steps.qmd). Paths are resolved relative to `PROJECT_PATH`. Definitions to be added.
+
+| Directory | Definition |
+|---|---|
+| <span id="project-path">`PROJECT_PATH`</span> | |
+| <span id="raw-data-metrics-dir">`RAW_DATA_METRICS_DIR`</span> | |
+| <span id="artifact-detection-dir">`ARTIFACT_DETECTION_DIR`</span> | |
+| <span id="preprocessing-dir">`PREPROCESSING_DIR`</span> | |
+| <span id="sorting-dir">`SORTING_DIR`</span> | |
+| <span id="postprocessing-dir">`POSTPROCESSING_DIR`</span> | |
+| <span id="curation-dir">`CURATION_DIR`</span> | |
+| <span id="export-dir">`EXPORT_DIR`</span> | |

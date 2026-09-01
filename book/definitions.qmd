@@ -1,5 +1,5 @@
 ---
-title: "Definitions and scope"
+title: "Definitions"
 ---
 
 ## Session
@@ -13,18 +13,3 @@ For example, a mouse undergoing one-hour continuous training sessions over ten d
 More complex experiments may require different choices. A one-hour training session might be broken into four non-contiguous ten-minute blocks in which the subject performs different tasks. These blocks could be passed directly as sessions, concatenated first, or split into separate processing blocks.
 
 For short trial-by-trial recording blocks using SpikeGLX gates and triggers, it is recommended to concatenate the blocks first with the appropriate CatGT functionality before passing them to the pipeline.
-
-## Out of scope for the first specification
-
-- Sync channel curation path, pending review.
-- Trigger-channel visualisation and removal of unwanted triggers.
-- Final choice of Allen or NWB disk specification details.
-
-## TODO
-
-- Finish the step-level input and output contracts.
-- Define the disk specification in more detail, using Allen conventions where possible.
-- Add further considerations for compute, memory, storage, and cluster execution.
-- Expand the Python and command-line API.
-- Decide the architecture for serialising and reloading stage outputs.
-- Decide how SpikeInterface GUI, unit matching, and downstream analysis connect to the core run folder.

@@ -1,6 +1,9 @@
 ---
-title: "Configuration and API"
+title: "Implementation"
 ---
+
+versioning.
+
 
 The pipeline should be configurable from YAML and callable from both the command line and Python. The implementation should infer which steps to run from the configuration when possible.
 
@@ -12,7 +15,7 @@ The pipeline should be configurable from YAML and callable from both the command
 - Record default values in `config.resolved.yaml` so reruns are reproducible.
 - Validate conflicting choices before expensive computation starts.
 
-## Example structure
+## Example configuration
 
 ```yaml
 data:
@@ -24,7 +27,7 @@ data:
 raw_quality:
   enabled: true
 
-artefacts:
+artifacts:
   saturation:
     enabled: true
   stimulus:
@@ -54,57 +57,6 @@ curation:
   gui: viewephys
 ```
 
-## Command-line examples
-
-Run the full pipeline:
-
-```bash
-ephys-pipeline run --config pipeline.yaml --output pipeline_run
-```
-
-Run only through preprocessing on a short time slice:
-
-```bash
-ephys-pipeline run --config pipeline.yaml --output debug_run --until preprocessing --debug-time-slice 0:120
-```
-
-Run one stage explicitly:
-
-```bash
-ephys-pipeline raw-quality --config pipeline.yaml --output pipeline_run
-```
-
-## Python API examples
-
-A user setting up for the first time with a fast preprocessing iteration cycle:
-
-```python
-recordings = ["/path/to/session_001", "/path/to/session_002"]
-
-preprocess(
-    recordings,
-    output_path="debug_preprocessing",
-    time_slice="0:120",
-    save_recording=False,
-)
-```
-
-A user checking raw data quality metrics:
-
-```python
-recordings = ["/path/to/session_001"]
-
-raw_data_metrics(recordings, output_path="raw_quality")
-```
-
-A user manually curating saturation artefacts:
-
-```python
-recordings = ["/path/to/session_001"]
-detections = detect_artefacts(recordings, output_path="artefact_detection")
-curate_artefacts(detections, output_path="artefact_curation", gui="viewephys")
-```
-
 ## Best-practice warnings
 
 A major benefit of a structured pipeline is that it can encode best practice directly into the execution path.
@@ -113,3 +65,13 @@ A major benefit of a structured pipeline is that it can encode best practice dir
 - If bad channels are removed before concatenation, the default policy should remove the union of all detected bad channels across sessions.
 - Avoid re-running whitening or motion correction in the sorter if those steps have already been applied by SpikeInterface.
 - Warn when a method was designed for high-channel-density probes and may behave poorly on smaller 32- or 64-channel recordings.
+
+## Memory estimation
+
+Each runnable step should estimate memory and disk requirements before executing. At minimum, estimates should consider recording duration, channel count, sampling rate, dtype, number of chunks, and whether intermediate arrays are materialised or streamed.
+
+## Open decisions
+
+- Which outputs are required for every run versus optional debug artifacts?
+- Which outputs should be considered stable public API for downstream analysis?
+- Which Allen or NWB conventions should be implemented directly, and which should only inform the folder organisation?

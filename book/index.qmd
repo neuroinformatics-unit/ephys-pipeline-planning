@@ -2,24 +2,37 @@
 title: "Electrophysiology pipeline plan"
 ---
 
-This site defines a high-level specification for a modern extracellular electrophysiology spike-sorting pipeline. It organises the planning document into a Quarto book so the pipeline stages, inputs, outputs, disk layout, API surface, and architectural questions can be reviewed independently.
+This document plans a high-level specification that defines the pipeline steps (and their inputs and outputs) to create a modern spike-sorting pipeline. The requirements of each step and proposed implementation are discussed. This documentation is not written for users but instead as developer guidelines for implementation.
 
-The pipeline should be:
+At a high level, the pipeline needs to be:
 
-- **Modular**: the full pipeline can run from one command, but users can also run up to any arbitrary step and stop for troubleshooting, parameter selection, and manual review.
-- **Composable**: each step should also be available through subcommands or Python functions.
+- **Modular**: the full pipeline can run from one command, but users can also run the pipeline up to any arbitrary step and stop for troubleshooting, parameter selection, and manual review.
 - **Protective**: the implementation should check for common invalid or poor-practice choices and warn or fail before users create misleading outputs.
-- **Traceable**: each step should define the inputs it consumes, the outputs it writes, and the metadata needed to reproduce a run.
 
-The proposed top-level stages are:
+The Allen already has an detailed pipeline for spike sorting, and this specification
+aims to build on their output format rather than reinvent it.
 
-1. Data loading
-2. Raw data quality metrics
-3. Artefact detection
-4. Artefact curation
-5. Preprocessing
-6. Spike sorting
-7. Postprocessing
-8. Curation
+These should all be run in SpikeInterface and GUI-related steps
+performed in viewephys (raw data and preprocessing) or spikeinterface-gui. Note that not all proposed functionality currently exists in these tools.
 
-The current draft is intentionally specification-first. Implementation details that are not settled yet are called out as open decisions rather than hidden in prose.
+# Pipeline steps
+
+The proposed pipeline steps are shown below:
+
+1. [Data loading](data-loader.qmd)
+2. [Raw data quality metrics](pipeline-steps.qmd#raw-data-quality-metrics)
+3. [Artifact detection](pipeline-steps.qmd#artifact-detection)
+4. [Artifact curation](pipeline-steps.qmd#artifact-curation)
+5. [Preprocessing](pipeline-steps.qmd#preprocessing)
+6. [Spike sorting](pipeline-steps.qmd#spike-sorting)
+7. [Postprocessing](pipeline-steps.qmd#postprocessing)
+8. [Curation](pipeline-steps.qmd#curation)
+
+See [Pipeline steps](pipeline-steps.qmd) for full details on each step. The image below details how the steps interact, with thick lines tracing the full pipeline, whereas thin lines trace additional possible data flow, including NWB conversion links from preprocessing, spike sorting, postprocessing, and curation.
+
+![Pipeline flow showing pipeline steps and NWB conversion links.](overview.png)
+
+
+
+
+

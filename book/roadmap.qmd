@@ -1,0 +1,58 @@
+---
+title: "Roadmap"
+---
+
+This roadmap describes the work needed to turn the planning specification into an implementable and extensible pipeline. The ordering is indicative: later goals can be explored earlier, but each phase should leave stable contracts for the next.
+
+## 1. Complete the pipeline specification
+
+- Finish the input, output, configuration, and validation contracts for every pipeline step.
+- Define the on-disk project structure and provenance records in more detail, using compatible Allen and NWB conventions where appropriate.
+- Specify how stage outputs are serialized, reloaded, versioned, and checked before reuse.
+- Define expected behavior for single-session, multi-session, concatenated, and debug recordings.
+
+**Goal:** each stage can be implemented and tested independently from its documented contract.
+
+## 2. Build the core implementation
+
+- Implement the Python API for whole-pipeline and individual-stage execution.
+- Add a command-line interface over the same core API.
+- Implement lightweight dependency and provenance checks so stages cannot silently consume incompatible or out-of-order outputs.
+- Add tests for partial reruns, optional stages, and loading outputs from disk.
+
+**Goal:** a user can run, stop, inspect, and resume the pipeline without requiring a workflow engine.
+
+## 3. Define execution and storage profiles
+
+- Document compute, memory, storage, and cluster requirements for each stage.
+- Define local, workstation, and cluster execution profiles without changing stage contracts.
+- Establish policies for keeping large recordings as references versus saving portable copies.
+
+**Goal:** the same pipeline specification can support local execution and later integration with Snakemake, Nextflow, or another workflow system.
+
+## 4. Connect review and downstream tools
+
+- Define how SpikeInterface GUI, manual curation decisions, unit matching, and downstream analysis connect to the project folder.
+- Standardize curation decision files and their precedence relative to automatic labels and merge proposals.
+- Complete and validate the NWB export mapping for all supported pipeline products.
+
+**Goal:** review and export workflows remain reproducible without modifying source outputs in place.
+
+## 5. Add synchronization and event-channel workflows
+
+- Define a sync-channel curation path, including detection, review, correction, and provenance of synchronization events.
+- Add trigger-channel visualization and configurable removal of unwanted triggers.
+- Define how curated synchronization and trigger events are represented on disk and exported to NWB time-series or interval structures.
+- Specify checks for clock alignment, dropped events, duplicated events, and inconsistent event counts across acquisition systems.
+
+**Goal:** downstream analyses can use reviewed event timing while retaining the original detected events and all curation decisions.
+
+## Completion criteria
+
+The first implementation milestone is complete when:
+
+- every core stage has a validated input/output contract
+- a single session can run from data loading through curation and NWB export
+- outputs can be reloaded and checked without relying on process memory
+- provenance links each result to its inputs, configuration, and software versions
+- optional or future workflows can be added without changing the core stage interfaces

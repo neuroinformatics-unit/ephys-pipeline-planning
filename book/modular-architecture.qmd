@@ -1,5 +1,5 @@
 ---
-title: "Architecture"
+title: "Modular architecture"
 ---
 
 The pipeline should expose the same core operations through Python functions, command-line subcommands, and complete pipeline runs. Each stage should have a narrow contract: inputs, outputs, validation, execution, and report generation.
