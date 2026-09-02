@@ -27,7 +27,10 @@ pipeline.run()
 
 ```
 
-This will output a folder like:
+This produces an output directory with the following structure:
+
+::: {.callout-note appearance="simple" icon="false"}
+## Output layout
 
 ```text
 output/
@@ -45,10 +48,10 @@ output/
 │   ├── bad_channel_ids.csv
 │   └── bad_channel_labels.csv
 ├── artifact_detection/
-│   └──event_periods.csv  # or an event_periods_curated.csv, maybe we `stop_for_artefact_curation` or something
+│   └── event_periods.csv              # or event_periods_curated.csv
 ├── preprocessing/
 │   ├── metadata.*
-│   └── recording/                 # Optional, depending on CONFIG
+│   └── recording/                     # optional, depending on CONFIG
 ├── sorting/
 │   ├── sorting/
 │   └── metadata.*
@@ -59,19 +62,25 @@ output/
 │   │   └── *.png
 │   └── metadata.*
 └── curation/
-│   ├── sorting_analyzer/
-│   ├── curation_decisions.*
-│   └── metadata.*
+    ├── sorting_analyzer/
+    ├── curation_decisions.*
+    └── metadata.*
 ```
 
-Here, `*` denotes a storage format that has not yet been specified. Optional stages and outputs are created only when enabled in the [`CONFIG`](config.qmd). Further work on this needs to be done to align with the Allen 
-pipeline and encode in this schema.
+`*`
+: Storage format has not yet been specified.
+
+**Optional outputs**
+: Created only when enabled in the [`CONFIG`](config.qmd). Artifact detection may pause for manual curation and produce `event_periods_curated.csv`.
+:::
+
+Further work on this needs to be done to align with the Allen pipeline and encode in this schema.
 
 Alternatively, the pipeline can be run piecemeal:
 
 ```python
 
-from pipelime import RawDataQualityNode
+from spikepipeline import RawDataQualityNode
 import spikeinterface.full as si
 recording = si.read_spikeglx("path/to/recording")
 
@@ -135,8 +144,8 @@ spikewrap did this and it worked, but it exposed it as an argument on the pipeli
 Architecturally its much nicer to have it orchestrated by a wrapper.
 
 ```python
-from spike_pipeline.slurm import slurm_runner
-from spike_pipeline import Pipeline
+from spikepipeline.slurm import slurm_runner
+from spikepipeline import Pipeline
 
 pipeline = Pipeline(
   recordings=["/path/to/recording", "/path/to/recording2"],  # or Recording or list of either
@@ -192,8 +201,8 @@ however I think it is fairly intuitive and quick to get used to.
 
 We start with:
 
-```
-from spike_pipeline import Pipeline, BadChannelDetectionNode
+```python
+from spikepipeline import Pipeline, BadChannelDetectionNode
 
 pipeline = Pipeline(
   recording=["path_to_recording1", "path_to_recording2"],
@@ -205,12 +214,12 @@ pipeline.run()
 ```
 
 This runs quality metrics and bad channel detection. We see from the bad channel
-detection plots generated in the project folder that it has failed, and so adjust 
+detection plots generated in the project folder that it has failed, and so adjust
 the parameters and run the node:
 
-```
+```python
 pipeline = Pipeline(
-recording=["path_to_recording1", "path_to_recording2"],
+  recording=["path_to_recording1", "path_to_recording2"],
   config="path/to/config.yaml",
   output_path="path/to/output/folder",
   start_at="bad_channel_detection",
@@ -218,22 +227,21 @@ recording=["path_to_recording1", "path_to_recording2"],
 )
 pipeline.run()
 ```
-```
 
 Let's say it looks much better now (the images and bad channel information 
-is now on disk in the project folder)
+are now on disk in the project folder).
 
 We can pick up where we left off. We could continue to run the entire pipeline,
 but maybe we want to prototype the preprocessing. We can run:
 
-```
+```python
 pipeline = Pipeline(
-recording=["path_to_recording1", "path_to_recording2"],
+  recording=["path_to_recording1", "path_to_recording2"],
   config="path/to/config.yaml",
   output_path="path/to/output/folder",
-  start_from="preprocessing",
-  stop_before="sorting"
-  debug="1min",  # debug` will slice a small part of the data, results are output in a `debug` folder.
+  start_at="preprocessing",
+  stop_before="sorting",
+  debug="1min",  # Slice a small part of the data and write results to a debug folder.
 )
 pipeline.run()
 
@@ -241,9 +249,9 @@ pipeline.run()
 
 recordings_pp_chains = pipeline.preprocessing.get_preprocessed_recording_chains()
 
-# [{"raw": recording", "filtered": recording", ...}, {"raw:recording", ...}]
+# [{"raw": recording, "filtered": recording, ...}, {"raw": recording, ...}]
 
-# This will open two windows, one for each session's recording. 
+# This will open two windows, one for each session's recording.
 # It will be possible to view each preprocessing step through the GUI.
 for pp_recordings in recordings_pp_chains:
   viewephys(pp_recordings)
@@ -282,12 +290,9 @@ recording=["path_to_recording1", "path_to_recording2"],
 
 ## Example configuration
 
+Include all or include-if-there?
+
 ```yaml
-data:
-  inputs:
-    - /path/to/session_001
-  probe: /path/to/probe.json
-  debug_time_slice: null
 
 raw_quality:
   enabled: true
@@ -307,8 +312,8 @@ preprocessing:
     type: bandpass
     freq_min: 300
     freq_max: 6000
-  common_reference: true
-  whitening: true
+  common_reference: false
+  whitening: false
 
 sorting:
   sorter: kilosort4
