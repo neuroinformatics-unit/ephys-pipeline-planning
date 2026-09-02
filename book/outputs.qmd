@@ -8,40 +8,142 @@ Data objects and files passed between the stages in [Pipeline steps](pipeline-st
 
 ### `RAW_DATA_PATH` {#raw-data-path}
 
+A filepath to any raw data files or folders that can be loaded by SpikeInterface (e.g. SpikeGLX, Open Ephys, SpikeInterface folder).
+
 ### `RAW_DATA_PATH_LIST` {#raw-data-path-list}
+
+A Python list of `RAW_DATA_PATH`.
 
 ### `SPIKEINTERFACE_REC` {#spikeinterface-rec}
 
+An in-memory SpikeInterface [`Recording`](https://spikeinterface.readthedocs.io/en/stable/api.html#spikeinterface.core.BaseRecording) object.
+
 ### `SPIKEINTERFACE_REC_LIST` {#spikeinterface-rec-list}
+
+A Python list of `SPIKEINTERFACE_REC`.
 
 ### `CONCAT_REC_TIMES` {#concat-rec-times}
 
+A CSV or [pandas `DataFrame`](https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.html) containing the start and stop times of sessions which
+have been concatenated. This is used by the pipeline to split the sorting.
+
+Each row contains the start and stop times of one session, in seconds.
+
+The two columns are:
+
+- `"start_time"`: session start time, as a float
+- `"stop_time"`: session stop time, as a float
+
 ### `DEBUGGING_REC` {#debugging-rec}
+
+A `SPIKEINTERFACE_REC` that has been cut down to allow the pipeline to run quickly.
+
+The default time to cut a recording down to is 30 seconds, based on the Allen pipeline (as of 02/09/2026).
 
 ### `PROBE` {#probe}
 
+A ProbeInterface [`Probe`](https://probeinterface.readthedocs.io/en/main/api.html#probeinterface.Probe) object.
+
 ### `CONFIG` {#config}
+
+The config file for the pipeline. See the [Config](config.qmd) page for the full specification.
 
 ## Outputs
 
 ### `RAW_DATA_QUALITY_METRICS` {#raw-data-quality-metrics}
 
+A set of metrics that estimate the quality of raw data, based on the IBL [spike-sorting white paper](https://doi.org/10.6084/m9.figshare.19705522). 
+
+For steps that are measured after preprocessing, `phase_shift`, a TEMPORAL_FILTER and COMMON_REFERENCE step are applied, based on the CONFIG.
+
+These metrics are computed and stored on disk, and used to generate [`RAW_DATA_QUALITY_PLOTS`](#raw-data-quality-plots). No hard thresholds are applied to these metrics to determine inclusion or exclusion of data, instead this is decided by visual inspection of the plots.
+
+**Before and after preprocessing:**
+
+- **RMS (AP and LFP bands):** To obtain a quick measure of data quality, RMS is computed from one 1-second chunk every 300 seconds. The following summary metrics are then calculated:
+
+    - Median RMS per channel across the sampled chunks.
+    - 10th and 90th percentiles of the per-channel median RMS values, providing a measure of RMS variability across the probe.
+
+    A full per-channel RMS map is then computed across the entire recording using consecutive windows approximately 3 seconds long (8192 samples for a Neuropixels 1.0 probe). These maps are used to generate [`RAW_DATA_QUALITY_PLOTS`](#raw-data-quality-plots).
+
+**After preprocessing:**
+
+- **Spectral Density AP** AP-band power spectral density in $V^2/Hz$ computed per channel using Welch's method.
+- **Spectral Density LFP** LFP-band power spectral density in $V^2/Hz$ computed per channel using Welch's method.
+- **Spike Rate** spike-like events per second from simple threshold detection on the preprocessed AP signal. These spikes can be overlaid on the RMS or raw data to get a first idea if any spikes are detectable from the data and if issues in the RMS appear to translate to issues in spike detection.
+
+**TODO: specify format for storage**
+**TODO: determine chunking rules**
+
 ### `RAW_DATA_QUALITY_PLOTS` {#raw-data-quality-plots}
+
+Plots used for quality-assessment, saved as `.png`. These are computed from the `RAW_DATA_QUALITY_METRICS` as developed by the [IBL](https://doi.org/10.6084/m9.figshare.19705522).
+
+- **AP-band and LFP-band RMS**: a time x channel plot of RMS. Separate plots contrasting before and after preprocessing.
+- **Spikes on RMS**: time x channel preprocessed RMS plot with detected spike time overlaid.
+- **AP-band and LFP-band Spectral Density**: a channel x frequency heatmap with intensity representing power, $V^2/Hz$
+
+### `BAD_CHANNEL_IDS` {#bad-channel-ids}
+
+The channel IDs identified as bad by the bad-channel detection step.
+
+### `BAD_CHANNEL_LABELS` {#bad-channel-labels}
+
+The bad-channel classification associated with each `BAD_CHANNEL_ID`.
 
 ### `EVENT_PERIODS_CSV` {#event-periods-csv}
 
+A CSV or [pandas `DataFrame`](https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.html) containing the start and stop times of periods
+detected as artefacts.
+
+Each row is a detected period.
+
+The three columns are:
+
+- `"start_time"`: taking float values
+- `"stop_time"`: taking float values
+- (optional) `label`: Label of the event period. Permitted values are `SATURATION` or `ENVELOPE`. 
+
 ### `EVENT_PERIODS_CURATED_CSV` {#event-periods-curated-csv}
+
+An `EVENT_PERIODS_CSV` is a CSV file that has been curated. It is the same format of
+`EVENT_PERIODS_CSV`. It indicates it has been manually curated by including the suffix `_curated`
+in the filename.
 
 ### `SORTING` {#sorting}
 
+A SpikeInterface [`BaseSorting`](https://spikeinterface.readthedocs.io/en/stable/api.html#spikeinterface.core.BaseSorting) object.
+
 ### `SORTING_ANALYZER` {#sorting-analyzer}
 
+A SpikeInterface [`SortingAnalyzer`](https://spikeinterface.readthedocs.io/en/stable/api.html#spikeinterface.core.SortingAnalyzer) object.
+
 ### `QUALITY_METRICS_CSV` {#quality-metrics-csv}
+
+Per-unit quality metrics table. The Allen AIND pipeline default postprocessing configuration lists the following SpikeInterface quality metrics in [`quality_metrics.metric_names`](https://github.com/AllenNeuralDynamics/aind-ephys-pipeline/blob/main/docs/source/parameters.rst):
+
+- `num_spikes`
+- `firing_rate`
+- `presence_ratio`
+- `snr`
+- `isi_violation`
+- `rp_violation`
+- `sliding_rp_violation`
+- `amplitude_cutoff`
+- `amplitude_median`
+- `amplitude_cv`
+- `synchrony`
+- `firing_range`
+- `drift`
+- `mahalanobis`
+- `l_ratio`
+- `d_prime`
+- `nearest_neighbor`
+- `silhouette`
+
+The Allen AIND curation query currently demonstrates filtering units with `isi_violations_ratio`, `presence_ratio`, and `amplitude_cutoff`.
 
 ### `POSTPROCESSING_PLOTS` {#postprocessing-plots}
 
 ### `CURATION_DECISIONS` {#curation-decisions}
-
-### `NWB_FILE` {#nwb-file}
-
-### `NWB_VALIDATION_REPORT` {#nwb-validation-report}

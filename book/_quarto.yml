@@ -29,11 +29,17 @@ book:
           text: "Pipeline steps"
         - href: outputs.qmd
           text: "Inputs and Outputs"
+        - href: config.qmd
+          text: "Config"
         - href: directory-definitions.qmd
           text: "Directory definitions"
-    - implementation.qmd
+    - part: "Implementation"
+      chapters:
+        - href: implementation.qmd
+          text: "Implementation"
+        - href: api.qmd
+          text: "API"
     - modular-architecture.qmd
-    - api.qmd
     - definitions.qmd
     - scope.qmd
     - roadmap.qmd

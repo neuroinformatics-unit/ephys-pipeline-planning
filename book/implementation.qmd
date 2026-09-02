@@ -2,10 +2,275 @@
 title: "Implementation"
 ---
 
-versioning.
+**TODO:** do not call these pipeline nodes, to avoid confusion with SI.
+**TODO**: unit matching!
+**TODO**: detect bad channel quality metrics
+**TODO: if session concat times passed, we get snapshots at the concatenation point!
+**TODO: split bad channel detection
+
+we can detect automatically with SI.
+
+The Python implementation plans each pipeline node as a separate class. All transfer
+of information between classes happens through, disk, except for SpikeInterface recording objects
+which may be optionally saved.
+
+```python
+from spikepipeline import Pipeline
+
+pipeline = Pipeline(
+  recordings="/path/to/recording",  # or Recording or list of either
+  config="path/to/config.yaml",
+  output_path="path/to/output/folder"
+)
+
+pipeline.run()
+
+```
+
+This will output a folder like:
+
+```text
+output/
+├── config.resolved.yaml
+├── raw_data_metrics/
+│   ├── raw_data_quality_metrics.csv
+│   ├── raw_data_quality_plots/
+│   │   ├── ap_band_rms_before_preprocessing.png
+│   │   ├── ap_band_rms_after_preprocessing.png
+│   │   ├── lfp_band_rms_before_preprocessing.png
+│   │   ├── lfp_band_rms_after_preprocessing.png
+│   │   ├── spikes_on_rms.png
+│   │   ├── ap_band_spectral_density.png
+│   │   └── lfp_band_spectral_density.png
+│   ├── bad_channel_ids.csv
+│   └── bad_channel_labels.csv
+├── artifact_detection/
+│   └──event_periods.csv  # or an event_periods_curated.csv, maybe we `stop_for_artefact_curation` or something
+├── preprocessing/
+│   ├── metadata.*
+│   └── recording/                 # Optional, depending on CONFIG
+├── sorting/
+│   ├── sorting/
+│   └── metadata.*
+├── postprocessing/
+│   ├── sorting_analyzer/
+│   ├── quality_metrics.csv
+│   ├── postprocessing_plots/
+│   │   └── *.png
+│   └── metadata.*
+└── curation/
+│   ├── sorting_analyzer/
+│   ├── curation_decisions.*
+│   └── metadata.*
+```
+
+Here, `*` denotes a storage format that has not yet been specified. Optional stages and outputs are created only when enabled in the [`CONFIG`](config.qmd). Further work on this needs to be done to align with the Allen 
+pipeline and encode in this schema.
+
+Alternatively, the pipeline can be run piecemeal:
+
+```python
+
+from pipelime import RawDataQualityNode
+import spikeinterface.full as si
+recording = si.read_spikeglx("path/to/recording")
+
+raw_data_node = RawDataQualityNode(
+  recordings=recording,
+  config="path/to/config.yaml",
+  output_path="path/to/output/folder"
+)
+raw_data_node.run()
+
+```
+
+which will output RAW_DATA_QUALITY_METRICS... (FILL IN) to xxx.
+
+Later, you could run:
+
+```python
+
+from pipelime import PreprocessingNode
+import spikeinterface.full as si
+
+preprocessing_node = PreprocessingNode(
+  recordings="path/to/recording",  # or an in-memory recording
+  config="path/to/config.yaml",
+  output_path="path/to/output/folder"
+)
+preprocessing_node.run()
+
+```
+
+which would detect the outputs of the previous step automatically. However, we might like to
+make arguments to pass these manually e.g. `event_periods_path` and `bad_channel_ids_path`
+if users request.
+
+## Memory estimation and SLURM
+
+Each node should be able to estimate its memory requirement. By default, it could use
+the number maximal number of cores it can support based on available memory when `.run()` is called.
+However, the number of cores for each step can be specified.
+
+However, it should admit convenience functions to allow external machinery to manage memory:
+
+```python
+
+preprocessing_node = PreprocessingNode(
+  session_recordings="path/to/recording",  # or an in-memory recording
+  config="path/to/config.yaml",
+  output_path="path/to/output/folder"
+  num_cores=8, # | None to estimate say 80% of available memory
+)
+
+mem_required = preprocessing_node.mem_required()
+needs_gpu = preprocessing_node.needs_gpu()
+
+```
+
+We could also include a SLURM module that can coordinate jobs
+from Python using [`submitit`](https://github.com/facebookincubator/submitit).
+
+spikewrap did this and it worked, but it exposed it as an argument on the pipeline node.
+Architecturally its much nicer to have it orchestrated by a wrapper.
+
+```python
+from spike_pipeline.slurm import slurm_runner
+from spike_pipeline import Pipeline
+
+pipeline = Pipeline(
+  recordings=["/path/to/recording", "/path/to/recording2"],  # or Recording or list of either
+  config="path/to/config.yaml",
+  output_path="path/to/output/folder"
+)
+
+slurm_runner(
+  pipeline,
+  node_per_session=True
+).run()
+
+```
+
+but it should be distinct from the Python API. This allows a modular architecture
+e.g. someone could ignore the slurm module and instead have each pipeline node could be 
+called from it's own docker container, etc.
+
+This would also allow running over a whole experiment:
+
+```python
+
+subjects = {
+  "subject_1": ["/path/to_session1", "/path/to/session2"]
+  "subject_2": ["/path/to_session1", "/path/to/session2"]
+  # ...
+}
+
+sub_pipelines = [
+  Pipeline(
+    recs, 
+    config="path/to/config.yaml",
+    output_path="/output/{sub}"
+  ) for sub, recs in subjects.values()
+]
+
+slurm_runner(
+  sub_pipelines, 
+  node_per_session=True # so a node for each subject, which spawns nodes for each session.
+)
+
+```
+
+## An example, troubleshooting preprocessing
+
+Say we were setting up our pipeline, and wanted to check various parameters.
+Let's say our config does not include `artefact_detection`, so the pipeline goes
+`raw_data_metrics_and_bad_channel_detection` -> `preprocessing`.
+
+The iteration cycle is between running code and inspecting outputs on disk.
+This is slightly different to running code and processing the outputs on code,
+however I think it is fairly intuitive and quick to get used to.
+
+We start with:
+
+```
+from spike_pipeline import Pipeline, BadChannelDetectionNode
+
+pipeline = Pipeline(
+  recording=["path_to_recording1", "path_to_recording2"],
+  config="path/to/config.yaml",
+  output_path="path/to/output/folder",
+  stop_before="preprocessing",
+)
+pipeline.run()
+```
+
+This runs quality metrics and bad channel detection. We see from the bad channel
+detection plots generated in the project folder that it has failed, and so adjust 
+the parameters and run the node:
+
+```
+pipeline = Pipeline(
+recording=["path_to_recording1", "path_to_recording2"],
+  config="path/to/config.yaml",
+  output_path="path/to/output/folder",
+  start_at="bad_channel_detection",
+  stop_before="preprocessing",
+)
+pipeline.run()
+```
+```
+
+Let's say it looks much better now (the images and bad channel information 
+is now on disk in the project folder)
+
+We can pick up where we left off. We could continue to run the entire pipeline,
+but maybe we want to prototype the preprocessing. We can run:
+
+```
+pipeline = Pipeline(
+recording=["path_to_recording1", "path_to_recording2"],
+  config="path/to/config.yaml",
+  output_path="path/to/output/folder",
+  start_from="preprocessing",
+  stop_before="sorting"
+  debug="1min",  # debug` will slice a small part of the data, results are output in a `debug` folder.
+)
+pipeline.run()
+
+# We can support viewephys inspection
+
+recordings_pp_chains = pipeline.preprocessing.get_preprocessed_recording_chains()
+
+# [{"raw": recording", "filtered": recording", ...}, {"raw:recording", ...}]
+
+# This will open two windows, one for each session's recording. 
+# It will be possible to view each preprocessing step through the GUI.
+for pp_recordings in recordings_pp_chains:
+  viewephys(pp_recordings)
+```
+
+We can adjust parameters and visually inspect, either with the images
+stored on disk or interactively through viewephys.
+
+Once we are happy with the results, and have our new settings encoded
+in the config file, we can run the rest of the pipeline:
+
+```python
+pipeline = Pipeline(
+recording=["path_to_recording1", "path_to_recording2"],
+  config="path/to/config.yaml",
+  output_path="path/to/output/folder",
+  start_from="preprocessing",
+)
+```
 
 
-The pipeline should be configurable from YAML and callable from both the command line and Python. The implementation should infer which steps to run from the configuration when possible.
+
+
+
+
+
+
 
 ## Configuration principles
 
@@ -66,12 +331,14 @@ A major benefit of a structured pipeline is that it can encode best practice dir
 - Avoid re-running whitening or motion correction in the sorter if those steps have already been applied by SpikeInterface.
 - Warn when a method was designed for high-channel-density probes and may behave poorly on smaller 32- or 64-channel recordings.
 
-## Memory estimation
-
-Each runnable step should estimate memory and disk requirements before executing. At minimum, estimates should consider recording duration, channel count, sampling rate, dtype, number of chunks, and whether intermediate arrays are materialised or streamed.
-
 ## Open decisions
 
 - Which outputs are required for every run versus optional debug artifacts?
 - Which outputs should be considered stable public API for downstream analysis?
 - Which Allen or NWB conventions should be implemented directly, and which should only inform the folder organisation?
+
+
+## Versioning
+
+## Smoothing out the user environment
+

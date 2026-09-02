@@ -2,23 +2,33 @@
 title: "Data loader"
 ---
 
-In the single-session case, this step takes any [`RAW_DATA_PATH`](outputs.qmd#raw-data-path) or loaded [`SPIKEINTERFACE_REC`](outputs.qmd#spikeinterface-rec) as an input.
+The data loading step supports direct loading of a session from acquisition software, or in-memory SpikeInterface
+recording objects. This allows support for multiple recording sessions. 
 
-In the multi-session case, the user can pass a [`SPIKEINTERFACE_REC`](outputs.qmd#spikeinterface-rec), [`SPIKEINTERFACE_REC_LIST`](outputs.qmd#spikeinterface-rec-list). If the user wants to concatenate
+It should exist as a modular convenience function rather than as a fixed step in the pipeline. For example, its output may be passed to [raw data metrics](pipeline-steps.qmd#raw-data-quality-metrics), [artefact detection](pipeline-steps.qmd#artifact-detection), [artefact curation](pipeline-steps.qmd#artifact-curation), [preprocessing](pipeline-steps.qmd#preprocessing), or the [full pipeline](index.qmd#pipeline-steps).
+Paths to raw data are not encoded in the [`CONFIG`](outputs.qmd#config) but should be passed to this loader function.
+
+INPUTS: 
+
+- In the single-session case, this step takes any [`RAW_DATA_PATH`](outputs.qmd#raw-data-path) or loaded [`SPIKEINTERFACE_REC`](outputs.qmd#spikeinterface-rec) as an input.
+
+- In the multi-session case, the user can pass a [`SPIKEINTERFACE_REC`](outputs.qmd#spikeinterface-rec), [`SPIKEINTERFACE_REC_LIST`](outputs.qmd#spikeinterface-rec-list). If the user wants to concatenate
 runs or sessions, they can do so manually at this stage. If the user wants to split the sorting based on concatenated times, 
 they will need to use [`CONCAT_REC_TIMES`](outputs.qmd#concat-rec-times).
 
-This step should provide an argument to cut down the recording for debugging (e.g. `debug=True` will take the first 3 minutes
-of the recording, see [`DEBUGGING_REC`](outputs.qmd#debugging-rec)). It should provide the option for the user to pass a [`PROBE`](outputs.qmd#probe) to attach to the recording(s).
+OUTPUTS:
 
-The result of this step is an in-memory [`SPIKEINTERFACE_REC`](outputs.qmd#spikeinterface-rec).  
+- The result of this step is an [`SPIKEINTERFACE_REC`](outputs.qmd#spikeinterface-rec) or [`SPIKEINTERFACE_REC_LIST`](outputs.qmd#spikeinterface-rec-list).  
 
-For flexibility, this node can be 
+CONSIDERATIONS:
+
+- This step should provide an argument to cut down the recording for debugging, see [`DEBUGGING_REC`](outputs.qmd#debugging-rec)). 
+- It should provide the option for the user to pass a [`PROBE`](outputs.qmd#probe) to attach to the recording(s).
+- As SpikeInterface requires the stream to be defined, this step should automatically find the AP stream 
+(and take a stream argument for the case it cannot be determined).
 
 <details>
 <summary><strong>Checks</strong></summary>
-
 - Stop if the probe cannot be loaded automatically and the user has not provided one.
 - Warn when recordings intended for multi-session processing do not share compatible channel sets or sampling rates.
-
 </details>

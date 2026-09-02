@@ -2,6 +2,15 @@
 title: "Roadmap"
 ---
 
+
+TODO: write somewhere about estimation of chunk size for various steps.
+**NOTE:** This will do three separate preprocessing passes, but should not take long.
+
+TODO: Error checking provndenace, each step should check the PROV file and outputs its own version. Because each step
+is modular, if running from within the file could be possible to get out of order. We don't want to go full snakemake / nextflow but just a small internal thing. The idea with this spec is core steps can be extended to snakemake nextflow or whatever.
+
+I think have a specific page for this.
+
 This roadmap describes the work needed to turn the planning specification into an implementable and extensible pipeline. The ordering is indicative: later goals can be explored earlier, but each phase should leave stable contracts for the next.
 
 ## 1. Complete the pipeline specification

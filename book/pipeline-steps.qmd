@@ -2,19 +2,24 @@
 title: "Pipeline steps"
 ---
 
-The [Data loader](data-loader.qmd) is separate from the pipeline steps and returns an in-memory [`SPIKEINTERFACE_REC`](outputs.qmd#spikeinterface-rec) or [`SPIKEINTERFACE_REC_LIST`](outputs.qmd#spikeinterface-rec-list).
+TODO: update this so that its very clear whats on disk and whats in memory. e.g. CSV should just be CSV
+saved to disk. Save for plots.
 
-Everything output to disk as according to XXX.
+The [Data loader](data-loader.qmd) is separate from the pipeline steps and returns an in-memory [`SPIKEINTERFACE_REC`](outputs.qmd#spikeinterface-rec) or [`SPIKEINTERFACE_REC_LIST`](outputs.qmd#spikeinterface-rec-list) that can be passed to this pipeline.
 
-Error checking provndenace, each step should check the PROV file and outputs its own version. Because each step
-is modular, if running from within the file could be possible to get out of order. We don't want to go full snakemake 
-/ nextflow but just a small internal thing. The idea with this spec is core steps can be extended to snakemake nextflow or whatever.
+TODO: Error checking provndenace, each step should check the PROV file and outputs its own version. Because each step
+is modular, if running from within the file could be possible to get out of order. We don't want to go full snakemake / nextflow but just a small internal thing. The idea with this spec is core steps can be extended to snakemake nextflow or whatever.
 
 Basically everything that can do goes through disk except for SpikeInterface recordings, heavy stuff.
 
-## Raw data quality metrics
+## Raw data quality metrics and Bad channel detection
 
-This step computes quality metrics on raw recordings before destructive or corrective processing. 
+This (optional) step computes IBL's quality metrics on raw recordings before destructive or corrective processing. 
+
+It also uses IBL's bad channel detection algorithm to flag bad channels. These can be passed to the preprocessing for removal or interpolation. Bad channel detection is run after high-pass filtering at 300 Hz.
+This is because bandpass filtering removes the high-frequencies used for noisy channel detection.
+
+The metrics and bad channel detection results are written to the `RAW_DATA_METRICS_DIR` in the PROJECT_PATH.
 
 **Inputs**
 
@@ -26,6 +31,14 @@ This step computes quality metrics on raw recordings before destructive or corre
 
 - [`RAW_DATA_QUALITY_METRICS`](outputs.qmd#raw-data-quality-metrics) saved to the [`RAW_DATA_METRICS_DIR`](directory-definitions.qmd#raw-data-metrics-dir)
 - [`RAW_DATA_QUALITY_PLOTS`](outputs.qmd#raw-data-quality-plots) saved to the [`RAW_DATA_METRICS_DIR`](directory-definitions.qmd#raw-data-metrics-dir)
+- [`BAD_CHANNEL_IDS`](outputs.qmd#bad-channel-ids) and [`BAD_CHANNEL_LABELS`](outputs.qmd#bad-channel-labels), saved to the [`RAW_DATA_METRICS_DIR`](directory-definitions.qmd#raw-data-metrics-dir).
+
+<details>
+<summary><strong>Checks</strong></summary>
+
+- This algorithm was developed for Neuropixels probes. Different settings should be recommended for probes with lower channel counts.
+
+</details>
 
 ## Artifact detection
 
@@ -49,7 +62,7 @@ These detected periods (stored in [`EVENT_PERIODS_CSV`](outputs.qmd#event-period
 
 ## Artifact curation
 
-This is a power-user step provides the user with the option to curate the automatically detected artifacts. This step is not automated, and typically more hands-on and requires a dedicated walkthrough in the documentation. It will entail the user loading their data into viewephys (applying the preprocessing beforehand as desired).
+This (optional) stepprovides the user with the option to curate the automatically detected artifacts. This step is not automated, and typically more hands-on and requires a dedicated walkthrough in the documentation. It will entail the user loading their data into viewephys (applying the preprocessing beforehand as desired).
 
 **Inputs**
 
@@ -65,11 +78,11 @@ This is a power-user step provides the user with the option to curate the automa
 
 Preprocesses the recording, supporting: 
 
-- Bad channel detection, with removal or interpolation.
+- Bad channel removal or interpolation (interpolation after filtering).
 - Phase shift correction.
-- Filtering: high-pass, low-pass, or band-pass.
+- TEMPORAL_FILTER steps 
 - Artifact period filling with zeros, noise, or another configured strategy.
-- Common referencing or high-pass spatial filtering.
+- - COMMON_REFERENCE steps
 - Motion correction.
 - Inter-session alignment when the input is a list of recordings.
 - Whitening.
@@ -83,10 +96,8 @@ Preprocesses the recording, supporting:
 
 **Outputs**
 
-- a [`SPIKEINTERFACE_REC`](outputs.qmd#spikeinterface-rec) or [`SPIKEINTERFACE_REC_LIST`](outputs.qmd#spikeinterface-rec-list) (of preprocessed recordings)
+- a [`SPIKEINTERFACE_REC`](outputs.qmd#spikeinterface-rec) or [`SPIKEINTERFACE_REC_LIST`](outputs.qmd#spikeinterface-rec-list) (of preprocessed recordings). This may be written to disk in the `PREPROCESSING_DIR` depending on CONFIG settings.
 - a [`PREPROCESSING_DIR`](directory-definitions.qmd#preprocessing-dir). This contains metadata and quality-metrics related to the preprocessing. 
-  It may also contain the saved [`SPIKEINTERFACE_REC`](outputs.qmd#spikeinterface-rec) or [`SPIKEINTERFACE_REC_LIST`](outputs.qmd#spikeinterface-rec-list) depending on [`CONFIG`](outputs.qmd#config) options.
-
 
 <details>
 <summary><strong>Preprocessing checks</strong></summary>
@@ -111,7 +122,7 @@ The spike sorting step, made very simple thanks to SpikeInterface:
 
 **Outputs**
 
-- a [`SORTING_DIR`](directory-definitions.qmd#sorting-dir) containing a [`SORTING`](outputs.qmd#sorting) output and other metadata.
+- a [`SORTING_DIR`](directory-definitions.qmd#sorting-dir) containing a [`SORTING`](outputs.qmd#sorting) saved to disk, and other metadata.
 
 ## Postprocessing
 
@@ -126,7 +137,9 @@ Postprocessing computes unit quality metrics used for curation.
 
 **Outputs**
 
-- a [`POSTPROCESSING_DIR`](directory-definitions.qmd#postprocessing-dir) containing a saved [`SORTING_ANALYZER`](outputs.qmd#sorting-analyzer), [`POSTPROCESSING_PLOTS`](outputs.qmd#postprocessing-plots), [`QUALITY_METRICS_CSV`](outputs.qmd#quality-metrics-csv) and other metadata.
+- a [`POSTPROCESSING_DIR`](directory-definitions.qmd#postprocessing-dir) containing a [`SORTING_ANALYZER`](outputs.qmd#sorting-analyzer) saved to disk as well as:
+  - `POSTPROCESSING_PLOTS`](outputs.qmd#postprocessing-plots)
+  - [`QUALITY_METRICS_CSV`](outputs.qmd#quality-metrics-csv) and other metadata.
 
 <details>
 <summary><strong>Postprocessing checks</strong></summary>
@@ -137,7 +150,7 @@ Postprocessing computes unit quality metrics used for curation.
 
 ## Curation
 
-The curation step computes labels and merges automatically (e.g. with bombcell, UnitRefine, SlaY) and applies them to the sorting analyzer, creating a new final sorting analyzer which services as the output of the pipeline.
+The curation step computes labels and merges automatically (e.g. with Bombcell, UnitRefine, SlaY) and applies them to the sorting analyzer, creating a new final sorting analyzer which services as the output of the pipeline.
 
 **Inputs**
 
