@@ -33,12 +33,7 @@ book:
           text: "Config"
         - href: directory-definitions.qmd
           text: "Directory definitions"
-    - part: "Implementation"
-      chapters:
-        - href: implementation.qmd
-          text: "Implementation"
-        - href: api.qmd
-          text: "API"
+    - implementation.qmd
     - modular-architecture.qmd
     - definitions.qmd
     - scope.qmd
