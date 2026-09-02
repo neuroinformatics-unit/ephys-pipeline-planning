@@ -342,3 +342,4 @@ A major benefit of a structured pipeline is that it can encode best practice dir
 
 ## Smoothing out the user environment
 
+## data provenance and checking
