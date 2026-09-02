@@ -1,0 +1,15 @@
+---
+title: "Definitions"
+---
+
+## Session
+
+A **session** is a contiguous period of recording on which the user wishes to detect and sort action potentials, yielding spike times sorted into units. Sessions may be processed independently, or the goal may be to track units across sessions.
+
+This definition is functional rather than purely file-based. It may differ between experiments, and it is up to the experimenter to decide what should count as a session.
+
+For example, a mouse undergoing one-hour continuous training sessions over ten days followed by a test session has an intuitive session structure: each one-hour contiguous recording is a session, and the researcher may want to track units across all sessions.
+
+More complex experiments may require different choices. A one-hour training session might be broken into four non-contiguous ten-minute blocks in which the subject performs different tasks. These blocks could be passed directly as sessions, concatenated first, or split into separate processing blocks.
+
+For short trial-by-trial recording blocks using SpikeGLX gates and triggers, it is recommended to concatenate the blocks first with the appropriate CatGT functionality before passing them to the pipeline.

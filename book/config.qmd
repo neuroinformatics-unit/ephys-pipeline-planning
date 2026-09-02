@@ -1,0 +1,28 @@
+---
+title: "Config"
+---
+
+The config file defines pipeline options that are not direct data inputs. Paths to raw data, project folders, or in-memory SpikeInterface recordings should be passed to the pipeline separately rather than encoded in the config.
+
+## Scope
+
+The config should describe processing choices, validation rules, and step-specific parameters. It should not define the location of the input data or replace explicit runtime arguments such as [`RAW_DATA_PATH`](outputs.qmd#raw-data-path), [`SPIKEINTERFACE_REC`](outputs.qmd#spikeinterface-rec), or [`PROJECT_PATH`](directory-definitions.qmd#project-path).
+
+## Sections
+
+Configuration sections to specify:
+
+- Data loading options, including debug slicing and optional probe attachment.
+- Raw data quality metric options.
+- Artefact detection options.
+- Preprocessing options.
+- Spike sorting options.
+- Postprocessing options.
+- Curation options.
+- Runtime and provenance options.
+
+## Open Decisions
+
+- Whether the config is stored as YAML, TOML, JSON, or a Python object.
+- Whether every pipeline step receives the full config or only its own section.
+- How config validation errors should be reported to users.
