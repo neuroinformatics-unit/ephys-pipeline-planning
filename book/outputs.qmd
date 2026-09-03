@@ -1,6 +1,4 @@
----
 title: "Inputs and Outputs"
----
 
 Data objects and files passed between the stages in [Pipeline steps](pipeline-steps.qmd). Definitions to be added. See [Directory definitions](directory-definitions.qmd) for on-disk locations.
 
@@ -10,7 +8,7 @@ Data objects and files passed between the stages in [Pipeline steps](pipeline-st
 
 A filepath to any raw data files or folders that can be loaded by SpikeInterface (e.g. SpikeGLX, Open Ephys, SpikeInterface folder).
 
-### `RAW_DATA_PATH_LIST` {#raw-data-path-list}
+### `RAW_DATA_PATH_SESSION_LIST` {#raw-data-path-session-list}
 
 A Python list of `RAW_DATA_PATH`.
 
@@ -18,7 +16,7 @@ A Python list of `RAW_DATA_PATH`.
 
 An in-memory SpikeInterface [`Recording`](https://spikeinterface.readthedocs.io/en/stable/api.html#spikeinterface.core.BaseRecording) object.
 
-### `SPIKEINTERFACE_REC_LIST` {#spikeinterface-rec-list}
+### `SPIKEINTERFACE_REC_SESSION_LIST` {#spikeinterface-rec-session-list}
 
 A Python list of `SPIKEINTERFACE_REC`.
 

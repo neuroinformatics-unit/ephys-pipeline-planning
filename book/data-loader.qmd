@@ -2,33 +2,31 @@
 title: "Data loader"
 ---
 
-The data loading step supports direct loading of a session from acquisition software, or in-memory SpikeInterface
-recording objects. This allows support for multiple recording sessions. 
+The data loading step ensures all possbile ways of passing raw data are coerced into in-memory SpikeInterface objects.
 
-It should exist as a modular convenience function rather than as a fixed step in the pipeline. For example, its output may be passed to [raw data metrics](pipeline-steps.qmd#raw-data-quality-metrics), [artefact detection](pipeline-steps.qmd#artifact-detection), [artefact curation](pipeline-steps.qmd#artifact-curation), [preprocessing](pipeline-steps.qmd#preprocessing), or the [full pipeline](index.qmd#pipeline-steps).
-Paths to raw data are not encoded in the [`CONFIG`](outputs.qmd#config) but should be passed to this loader function.
+It should exist as a modular convenience function rather than as a fixed step in the pipeline, as its output may be passed to any of [raw data metrics](pipeline-steps.qmd#raw-data-quality-metrics), [artefact detection](pipeline-steps.qmd#artifact-detection), [artefact curation](pipeline-steps.qmd#artifact-curation), [preprocessing](pipeline-steps.qmd#preprocessing), or the [full pipeline](index.qmd#pipeline-steps).
+As such, no information related to data loading (e.g. file paths) is encoded in the [`CONFIG`](outputs.qmd#config).
 
-INPUTS: 
+**INPUTS:**
 
-- In the single-session case, this step takes any [`RAW_DATA_PATH`](outputs.qmd#raw-data-path) or loaded [`SPIKEINTERFACE_REC`](outputs.qmd#spikeinterface-rec) as an input.
+- A [`RAW_DATA_PATH`](outputs.qmd#raw-data-path) or [`RAW_DATA_PATH_SESSION_LIST`](outputs.qmd#raw-data-path-session-list)
+- A [`SPIKEINTERFACE_REC`](outputs.qmd#spikeinterface-rec) or [`SPIKEINTERFACE_REC_SESSION_LIST`](outputs.qmd#spikeinterface-rec-session-list).
+- (optional) a `bool` flag for producing a `DEBUGGING_REC`
+- (optional) a `STREAM_NAME` in case the AP stream cannot be automatically detected.
 
-- In the multi-session case, the user can pass a [`SPIKEINTERFACE_REC`](outputs.qmd#spikeinterface-rec), [`SPIKEINTERFACE_REC_LIST`](outputs.qmd#spikeinterface-rec-list). If the user wants to concatenate
-runs or sessions, they can do so manually at this stage. If the user wants to split the sorting based on concatenated times, 
-they will need to use [`CONCAT_REC_TIMES`](outputs.qmd#concat-rec-times).
+**OUTPUTS:**
 
-OUTPUTS:
+- a [`SPIKEINTERFACE_REC`](outputs.qmd#spikeinterface-rec) or [`SPIKEINTERFACE_REC_SESSION_LIST`](outputs.qmd#spikeinterface-rec-session-list).  
+or [`DEBUGGING_REC`](outputs.qmd#debugging-rec) or [`DEBUGGING_REC_LIST`](outputs.qmd#debugging-rec).
+- [`CONCAT_REC_TIMES`](outputs.qmd#concat-rec-times) or [`CONCAT_REC_TIMES_LIST`](outputs.qmd#concat-rec-times) if concatenated recordings are detected.
 
-- The result of this step is an [`SPIKEINTERFACE_REC`](outputs.qmd#spikeinterface-rec) or [`SPIKEINTERFACE_REC_LIST`](outputs.qmd#spikeinterface-rec-list).  
+**OPERATIONS:**
 
-CONSIDERATIONS:
+- Load a [`RAW_DATA_PATH`](outputs.qmd#raw-data-path) or [`RAW_DATA_PATH_SESSION_LIST`](outputs.qmd#raw-data-path-session-list) to [`SPIKEINTERFACE_REC`](outputs.qmd#spikeinterface-rec) or [`SPIKEINTERFACE_REC_SESSION_LIST`](outputs.qmd#spikeinterface-rec-session-list), respectively.  
+- Automatically determine the AP stream, otherwise use `STREAM_NAME`. 
+- (optional) time slice the recordings to produce a [`DEBUGGING_REC`](outputs.qmd#debugging-rec).
 
-- This step should provide an argument to cut down the recording for debugging, see [`DEBUGGING_REC`](outputs.qmd#debugging-rec)). 
-- It should provide the option for the user to pass a [`PROBE`](outputs.qmd#probe) to attach to the recording(s).
-- As SpikeInterface requires the stream to be defined, this step should automatically find the AP stream 
-(and take a stream argument for the case it cannot be determined).
+**CHECKS:**
 
-<details>
-<summary><strong>Checks</strong></summary>
-- Stop if the probe cannot be loaded automatically and the user has not provided one.
-- Warn when recordings intended for multi-session processing do not share compatible channel sets or sampling rates.
-</details>
+- ERROR if no probe found in the loaded or passed recordings.
+- ERROR if cannot determine AP stream and no `STREAM_NAME` provided.

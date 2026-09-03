@@ -5,7 +5,7 @@ title: "Pipeline steps"
 TODO: update this so that its very clear whats on disk and whats in memory. e.g. CSV should just be CSV
 saved to disk. Save for plots.
 
-The [Data loader](data-loader.qmd) is separate from the pipeline steps and returns an in-memory [`SPIKEINTERFACE_REC`](outputs.qmd#spikeinterface-rec) or [`SPIKEINTERFACE_REC_LIST`](outputs.qmd#spikeinterface-rec-list) that can be passed to this pipeline.
+The [Data loader](data-loader.qmd) is separate from the pipeline steps and returns an in-memory [`SPIKEINTERFACE_REC`](outputs.qmd#spikeinterface-rec) or [`SPIKEINTERFACE_REC_SESSION_LIST`](outputs.qmd#spikeinterface-rec-session-list) that can be passed to this pipeline.
 
 TODO: Error checking provndenace, each step should check the PROV file and outputs its own version. Because each step
 is modular, if running from within the file could be possible to get out of order. We don't want to go full snakemake / nextflow but just a small internal thing. The idea with this spec is core steps can be extended to snakemake nextflow or whatever.
@@ -23,7 +23,7 @@ The metrics and bad channel detection results are written to the `RAW_DATA_METRI
 
 **Inputs**
 
-- a [`RAW_DATA_PATH`](outputs.qmd#raw-data-path), [`RAW_DATA_PATH_LIST`](outputs.qmd#raw-data-path-list), [`SPIKEINTERFACE_REC`](outputs.qmd#spikeinterface-rec), or [`SPIKEINTERFACE_REC_LIST`](outputs.qmd#spikeinterface-rec-list)
+- a [`RAW_DATA_PATH`](outputs.qmd#raw-data-path), [`RAW_DATA_PATH_SESSION_LIST`](outputs.qmd#raw-data-path-session-list), [`SPIKEINTERFACE_REC`](outputs.qmd#spikeinterface-rec), or [`SPIKEINTERFACE_REC_SESSION_LIST`](outputs.qmd#spikeinterface-rec-session-list)
 - a [`CONFIG`](outputs.qmd#config)
 - a [`PROJECT_PATH`](directory-definitions.qmd#project-path)
 
@@ -52,7 +52,7 @@ These detected periods (stored in [`EVENT_PERIODS_CSV`](outputs.qmd#event-period
 
 **Inputs**
 
-- a [`RAW_DATA_PATH`](outputs.qmd#raw-data-path), [`RAW_DATA_PATH_LIST`](outputs.qmd#raw-data-path-list), [`SPIKEINTERFACE_REC`](outputs.qmd#spikeinterface-rec), or [`SPIKEINTERFACE_REC_LIST`](outputs.qmd#spikeinterface-rec-list)
+- a [`RAW_DATA_PATH`](outputs.qmd#raw-data-path), [`RAW_DATA_PATH_SESSION_LIST`](outputs.qmd#raw-data-path-session-list), [`SPIKEINTERFACE_REC`](outputs.qmd#spikeinterface-rec), or [`SPIKEINTERFACE_REC_SESSION_LIST`](outputs.qmd#spikeinterface-rec-session-list)
 - a [`CONFIG`](outputs.qmd#config)
 - a [`PROJECT_PATH`](directory-definitions.qmd#project-path)
 
@@ -89,19 +89,20 @@ Preprocesses the recording, supporting:
 
 **Inputs**
 
-- a [`RAW_DATA_PATH`](outputs.qmd#raw-data-path), [`RAW_DATA_PATH_LIST`](outputs.qmd#raw-data-path-list), [`SPIKEINTERFACE_REC`](outputs.qmd#spikeinterface-rec), or [`SPIKEINTERFACE_REC_LIST`](outputs.qmd#spikeinterface-rec-list)
+- a [`RAW_DATA_PATH`](outputs.qmd#raw-data-path), [`RAW_DATA_PATH_SESSION_LIST`](outputs.qmd#raw-data-path-session-list), [`SPIKEINTERFACE_REC`](outputs.qmd#spikeinterface-rec), or [`SPIKEINTERFACE_REC_SESSION_LIST`](outputs.qmd#spikeinterface-rec-session-list)
 - a [`CONFIG`](outputs.qmd#config)
 - a [`PROJECT_PATH`](directory-definitions.qmd#project-path)
 - (optional) [`EVENT_PERIODS_CSV`](outputs.qmd#event-periods-csv) or [`EVENT_PERIODS_CURATED_CSV`](outputs.qmd#event-periods-curated-csv), loaded from the [`ARTIFACT_DETECTION_DIR`](directory-definitions.qmd#artifact-detection-dir)
 
 **Outputs**
 
-- a [`SPIKEINTERFACE_REC`](outputs.qmd#spikeinterface-rec) or [`SPIKEINTERFACE_REC_LIST`](outputs.qmd#spikeinterface-rec-list) (of preprocessed recordings). This may be written to disk in the `PREPROCESSING_DIR` depending on CONFIG settings.
+- a [`SPIKEINTERFACE_REC`](outputs.qmd#spikeinterface-rec) or [`SPIKEINTERFACE_REC_SESSION_LIST`](outputs.qmd#spikeinterface-rec-session-list) (of preprocessed recordings). This may be written to disk in the `PREPROCESSING_DIR` depending on CONFIG settings.
 - a [`PREPROCESSING_DIR`](directory-definitions.qmd#preprocessing-dir). This contains metadata and quality-metrics related to the preprocessing. 
 
 <details>
 <summary><strong>Preprocessing checks</strong></summary>
 
+- Warn when recordings intended for multi-session processing do not share compatible channel sets or sampling rates. (maybe in Preprocessing)
 - Apply phase-shift correction when the probe supports it.
 - For multi-session processing, use the same set of channels across sessions.
 - Do not re-run whitening or motion correction in the sorter if already run through SpikeInterface preprocessing.
@@ -115,7 +116,7 @@ The spike sorting step, made very simple thanks to SpikeInterface:
 
 **Inputs**
 
-- a [`SPIKEINTERFACE_REC`](outputs.qmd#spikeinterface-rec) or [`SPIKEINTERFACE_REC_LIST`](outputs.qmd#spikeinterface-rec-list),
+- a [`SPIKEINTERFACE_REC`](outputs.qmd#spikeinterface-rec) or [`SPIKEINTERFACE_REC_SESSION_LIST`](outputs.qmd#spikeinterface-rec-session-list),
   OR a [`PROJECT_PATH`](directory-definitions.qmd#project-path) containing a [`PREPROCESSING_DIR`](directory-definitions.qmd#preprocessing-dir) with saved recording.
 - a [`CONFIG`](outputs.qmd#config)
 - a [`PROJECT_PATH`](directory-definitions.qmd#project-path) containing a [`PREPROCESSING_DIR`](directory-definitions.qmd#preprocessing-dir). This is used to store outputs and cross-check the metadata of the passed recording to the on-disk project.
@@ -130,7 +131,7 @@ Postprocessing computes unit quality metrics used for curation.
 
 **Inputs**
 
-- a [`SPIKEINTERFACE_REC`](outputs.qmd#spikeinterface-rec) or [`SPIKEINTERFACE_REC_LIST`](outputs.qmd#spikeinterface-rec-list),
+- a [`SPIKEINTERFACE_REC`](outputs.qmd#spikeinterface-rec) or [`SPIKEINTERFACE_REC_SESSION_LIST`](outputs.qmd#spikeinterface-rec-session-list),
   OR a [`PROJECT_PATH`](directory-definitions.qmd#project-path) containing a [`PREPROCESSING_DIR`](directory-definitions.qmd#preprocessing-dir) with saved recording.
 - a [`CONFIG`](outputs.qmd#config)
 - a [`PROJECT_PATH`](directory-definitions.qmd#project-path)
