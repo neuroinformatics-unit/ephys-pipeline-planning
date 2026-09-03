@@ -5,6 +5,7 @@ title: "Data loader"
 The data loading step ensures all possbile ways of passing raw data are coerced into in-memory SpikeInterface objects.
 
 It should exist as a modular convenience function rather than as a fixed step in the pipeline, as its output may be passed to any of [raw data metrics](pipeline-steps.qmd#raw-data-quality-metrics), [artefact detection](pipeline-steps.qmd#artifact-detection), [artefact curation](pipeline-steps.qmd#artifact-curation), [preprocessing](pipeline-steps.qmd#preprocessing), or the [full pipeline](index.qmd#pipeline-steps).
+It should exist as a modular convenience function rather than as a fixed step in the pipeline, as its [`DATA_LOADER_OUTPUT`](outputs.qmd#data-loader-output) may be passed to any of [raw data metrics](pipeline-steps.qmd#raw-data-quality-metrics), [artefact detection](pipeline-steps.qmd#artifact-detection), [artefact curation](pipeline-steps.qmd#artifact-curation), [preprocessing](pipeline-steps.qmd#preprocessing), or the [full pipeline](index.qmd#pipeline-steps).
 As such, no information related to data loading (e.g. file paths) is encoded in the [`CONFIG`](outputs.qmd#config).
 
 **INPUTS:**
@@ -16,8 +17,7 @@ As such, no information related to data loading (e.g. file paths) is encoded in 
 
 **OUTPUTS:**
 
-- a [`SPIKEINTERFACE_REC`](outputs.qmd#spikeinterface-rec) or [`SPIKEINTERFACE_REC_SESSION_LIST`](outputs.qmd#spikeinterface-rec-session-list).  
-or [`DEBUGGING_REC`](outputs.qmd#debugging-rec) or [`DEBUGGING_REC_LIST`](outputs.qmd#debugging-rec).
+- a [`DATA_LOADER_OUTPUT`](outputs.qmd#data-loader-output), or a [`DEBUGGING_REC`](outputs.qmd#debugging-rec) if the debugging option is used.
 - [`CONCAT_REC_TIMES`](outputs.qmd#concat-rec-times) or [`CONCAT_REC_TIMES_LIST`](outputs.qmd#concat-rec-times) if concatenated recordings are detected.
 
 **OPERATIONS:**

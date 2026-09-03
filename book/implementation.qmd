@@ -7,6 +7,10 @@ title: "Implementation"
 **TODO**: detect bad channel quality metrics
 **TODO: if session concat times passed, we get snapshots at the concatenation point!
 **TODO: split bad channel detection
+TODO: Error checking provndenace, each step should check the PROV file and outputs its own version. Because each step
+is modular, if running from within the file could be possible to get out of order. We don't want to go full snakemake / nextflow but just a small internal thing. The idea with this spec is core steps can be extended to snakemake nextflow or whatever.
+
+Basically everything that can do goes through disk except for SpikeInterface recordings, heavy stuff.
 
 we can detect automatically with SI.
 

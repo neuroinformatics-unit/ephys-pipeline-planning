@@ -20,6 +20,12 @@ An in-memory SpikeInterface [`Recording`](https://spikeinterface.readthedocs.io/
 
 A Python list of `SPIKEINTERFACE_REC`.
 
+### `DATA_LOADER_OUTPUT` {#data-loader-output}
+
+The canonical data input type accepted by pipeline steps that can operate either on raw data locations or on recordings already loaded into memory.
+
+It may be a [`RAW_DATA_PATH`](#raw-data-path), [`RAW_DATA_PATH_SESSION_LIST`](#raw-data-path-session-list), [`SPIKEINTERFACE_REC`](#spikeinterface-rec), or [`SPIKEINTERFACE_REC_SESSION_LIST`](#spikeinterface-rec-session-list).
+
 ### `CONCAT_REC_TIMES` {#concat-rec-times}
 
 A CSV or [pandas `DataFrame`](https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.html) containing the start and stop times of sessions which
