@@ -29,14 +29,11 @@ book:
           text: "Pipeline steps"
         - href: outputs.qmd
           text: "Inputs and Outputs"
-        - href: config.qmd
-          text: "Config"
-        - href: directory-definitions.qmd
-          text: "Directory definitions"
+        - href: on-disk-structure.qmd
+          text: "On-disk structure"
+    - href: config.qmd
+      text: "Config"
     - implementation.qmd
-    - modular-architecture.qmd
-    - definitions.qmd
-    - scope.qmd
     - roadmap.qmd
 
 format:

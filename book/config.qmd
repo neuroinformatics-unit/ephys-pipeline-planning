@@ -2,27 +2,214 @@
 title: "Config"
 ---
 
-The config file defines pipeline options that are not direct data inputs. Paths to raw data, project folders, or in-memory SpikeInterface recordings should be passed to the pipeline separately rather than encoded in the config.
+The configuration file defines the pipeline to be run. This makes it standardized and easy to share.
 
-## Scope
+## Example configs
 
-The config should describe processing choices, validation rules, and step-specific parameters. It should not define the location of the input data or replace explicit runtime arguments such as [`RAW_DATA_PATH`](outputs.qmd#raw-data-path), [`SPIKEINTERFACE_REC`](outputs.qmd#spikeinterface-rec), or [`PROJECT_PATH`](directory-definitions.qmd#project-path).
+The following configurations provide example pipelines for common use cases. Select a configuration to view the complete YAML.
 
-## Sections
+::: {.callout-warning}
+  These configuration examples are not well tested yet and are primarily for example. **TODO**: double check against the reference pipelines and run in a test suite.
+:::
 
-Configuration sections to specify:
 
-- Data loading options, including debug slicing and optional probe attachment.
-- Raw data quality metric options.
-- Artefact detection options.
-- Preprocessing options.
-- Spike sorting options.
-- Postprocessing options.
-- Curation options.
-- Runtime and provenance options.
+::: {.panel-tabset}
 
-## Open Decisions
+### Kilosort4 pipeline
 
-- Whether the config is stored as YAML, TOML, JSON, or a Python object.
-- Whether every pipeline step receives the full config or only its own section.
-- How config validation errors should be reported to users.
+A minimal preprocessing pipeline intended for Kilosort4. Phase-shift correction is only required for acquisition systems with inter-sample channel delays, such as Neuropixels.
+
+```yaml
+
+raw_data_quality_metrics:
+  NotImplemented
+
+detect_bad_channels:
+  method: 'coherence+psd'
+  
+preprocessing:
+  remove_bad_channels: {}
+  phase_shift: {}  # Neuropixels only
+  bandpass_filter:
+    freq_min: 300.0
+    freq_max: 6000.0
+  common_reference:
+    reference: global
+    operator: median
+
+sorting:
+  sorter: kilosort4
+  params:
+    do_CAR: false
+    highpass_cutoff: 0.1  # Filtering is performed above
+
+postprocessing:
+  waveforms:
+    ms_before: 1.0
+    ms_after: 2.0
+    max_spikes_per_unit: 2500
+  quality_metrics:
+    metric_names: all
+  compute_sparsity:
+    method: radius
+    radius_um: 100
+```
+
+### IBL pipeline (NP1)
+
+Preprocessing based on the International Brain Laboratory pipeline for Neuropixels 1.0 recordings. This applies temporal high-pass filtering, correction of Neuropixels inter-sample shifts, IBL bad-channel detection and interpolation, and spatial destriping.
+
+Note that IBL use their own implementation of Kilosort 2.5 as part of the [IBL spike-sorting pipeline](https://github.com/int-brain-lab/ibl-sorter). In this pipeline we instead use the original [MouseLand Kilosort 2.5](https://github.com/MouseLand/Kilosort/releases/tag/v2.5) implementation.
+
+```yaml
+
+raw_data_quality_metrics:
+  NotImplemented
+
+detect_bad_channels:
+  method: 'coherence+psd'
+
+detect_artefacts:
+  saturation:
+    saturation_threshold_uV: 1200  # NP1 default
+
+preprocessing:
+  highpass_filter:
+    freq_min: 300.0
+  phase_shift: {}
+  silence_periods:
+    mode: zeros
+  interpolate_bad_channels: {}
+  highpass_spatial_filter: {}
+
+sorting:
+  sorter: kilosort2_5
+  params:
+    car: false
+    freq_min: 0.1  # Filtering is performed above
+
+postprocessing:
+  waveforms:
+    ms_before: 1.0
+    ms_after: 2.0
+    max_spikes_per_unit: 2500
+  quality_metrics:
+    metric_names: all
+  compute_sparsity:
+    method: radius
+    radius_um: 100
+```
+
+### Multi-session aligned
+
+A more extensive pipeline for preprocessing, motion correction, alignment, and concatenation of multiple recording sessions before sorting.
+
+```yaml
+raw_data_quality_metrics:
+  NotImplemented
+
+detect_bad_channels:
+  method: 'coherence+psd'
+
+preprocessing:
+  remove_bad_channels: {}
+  phase_shift:
+    margin_ms: 100.0
+  bandpass_filter:
+    freq_min: 300.0
+    freq_max: 6000.0
+  common_reference:
+    reference: global
+    operator: median
+  motion_correction:
+    preset: nonrigid_fast_and_accurate
+  inter_session_alignment:
+    NotImplementedError
+  concatenate_sessions: {}  # the intersection of good channels across sessions is used
+
+sorting:
+  sorter: kilosort4
+  params:
+    do_CAR: false
+    do_correction: false
+    highpass_cutoff: 0.1
+
+postprocessing:
+  waveforms:
+    ms_before: 1.0
+    ms_after: 2.0
+    max_spikes_per_unit: 2500
+  quality_metrics:
+    metric_names: all
+  compute_sparsity:
+    method: radius
+    radius_um: 100
+```
+
+:::
+
+## Full options
+
+**TODO:** need to do more here from a user-facing perspective (e.g. non-coders may not be able to read the API docs).
+
+### `raw_data_quality_metrics`
+
+* NOT IMPLEMENTED
+
+### `detect_bad_channels`
+
+See [`detect_bad_channels`](https://spikeinterface.readthedocs.io/en/latest/api.html#spikeinterface.preprocessing.detect_bad_channels) for a list of valid arguments.
+
+### `detect_artefacts`
+
+Detect artefact periods has two (optional) entries, `saturation` and `envelope`. The arguments they accept
+correspond to the  [`detect_saturation_periods`](https://spikeinterface.readthedocs.io/en/latest/api.html#spikeinterface.preprocessing.detect_saturation_periods) and [`detect_artifact_periods_by_envelope`](https://spikeinterface.readthedocs.io/en/latest/api.html#spikeinterface.preprocessing.detect_artifact_periods_by_envelope) respectively.
+
+### `preprocessing`
+
+The supported steps and their arguments can be found in the SpikeInterface API:
+
+* [`phase_shift`](https://spikeinterface.readthedocs.io/en/latest/api.html#spikeinterface.preprocessing.phase_shift)
+* [`bandpass_filter`](https://spikeinterface.readthedocs.io/en/latest/api.html#spikeinterface.preprocessing.bandpass_filter)
+* [`interpolate_bad_channels`](https://spikeinterface.readthedocs.io/en/latest/api.html#spikeinterface.preprocessing.interpolate_bad_channels)
+* [`common_reference`](https://spikeinterface.readthedocs.io/en/latest/api.html#spikeinterface.preprocessing.common_reference)
+* [`correct_motion`](https://spikeinterface.readthedocs.io/en/latest/api.html#spikeinterface.preprocessing.correct_motion)
+* [`whiten`](https://spikeinterface.readthedocs.io/en/latest/api.html#spikeinterface.preprocessing.whiten)
+* [`silence_periods`](https://spikeinterface.readthedocs.io/en/latest/api.html#spikeinterface.preprocessing.silence_periods)
+
+`inter_session_alignment` is not currently implemented.
+`concatenate_sessions` is not currently implemented.
+
+
+### `sorting`
+
+See [`run_sorter`](https://spikeinterface.readthedocs.io/en/latest/api.html#spikeinterface.sorters.run_sorter) for the arguments accepted by SpikeInterface.
+
+
+In Python, sorter-specific parameters can be inspected with:
+
+* [`get_default_sorter_params`](https://spikeinterface.readthedocs.io/en/latest/api.html#spikeinterface.sorters.get_default_sorter_params)
+* [`get_sorter_params_description`](https://spikeinterface.readthedocs.io/en/latest/api.html#spikeinterface.sorters.get_sorter_params_description)
+
+otherwise the available parameters and their descriptions can be found in the sorter source code:
+
+* [Kilosort 2.5](https://github.com/SpikeInterface/spikeinterface/blob/main/src/spikeinterface/sorters/external/kilosort2_5.py)
+* [Kilosort 4](https://github.com/SpikeInterface/spikeinterface/blob/main/src/spikeinterface/sorters/external/kilosort4.py)
+* [Lupin](https://github.com/SpikeInterface/spikeinterface/blob/main/src/spikeinterface/sorters/internal/lupin.py)
+* [MountainSort5](https://github.com/SpikeInterface/spikeinterface/blob/main/src/spikeinterface/sorters/external/mountainsort5.py)
+
+### `postprocessing`
+
+Postprocessing is performed using a SpikeInterface [`SortingAnalyzer`](https://spikeinterface.readthedocs.io/en/latest/api.html#spikeinterface.core.SortingAnalyzer).
+
+See the SpikeInterface API for:
+
+* [`random_spikes`](https://github.com/SpikeInterface/spikeinterface/blob/main/src/spikeinterface/core/analyzer_extension_core.py#L2229
+)
+* [`waveforms`](https://github.com/SpikeInterface/spikeinterface/blob/f6a730511747f622d4dbdd8dd8864cd85ec0f779/src/spikeinterface/core/analyzer_extension_core.py#L145)
+* [`quality_metrics`](https://spikeinterface.readthedocs.io/en/latest/api.html#spikeinterface.metrics.quality.compute_quality_metrics)  **TODO: this is not enough**
+* [`compute_sparsity`](https://spikeinterface.readthedocs.io/en/latest/api.html#spikeinterface.core.compute_sparsity)
+
+### Curation
+
+Not implemented
