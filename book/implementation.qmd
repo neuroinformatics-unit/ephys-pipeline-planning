@@ -124,6 +124,17 @@ Individual pipeline steps can also be run piecemeal. Typically users
 would not run these individual steps, but they allow developers to
 arbitrarily wrap these as they wish (e.g. in docker images, as NextFlow nodes).
 
+The steps will be:
+
+1. `RawDataQualityMetricsStep()`
+2. `DetectBadChannelsStep()`
+3. `ArtifactDetectionStep()`
+4. `ArtifactCurationStep()`
+5. `PreprocessingStep()`
+6. `SpikeSortingStep()`
+7. `PostprocessingStep()`
+8. `CurationStep()`
+
 ```python
 
 from spikepipeline import RawDataQualityStep
